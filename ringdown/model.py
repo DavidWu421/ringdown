@@ -11,6 +11,7 @@ import jax.scipy as jsp
 import numpyro
 import numpyro.distributions as dist
 from . import qnms
+from . import qnm_models
 from .indexing import ModeIndexList
 from .result import Result
 from .utils.swsh import construct_sYlm, calc_YpYc
@@ -198,37 +199,6 @@ def rd_design_matrix(
     return dm
 
 
-def chi_factors(chi, coeffs):
-    log_1m_chi = jnp.log1p(-chi)
-    log_1m_chi_2 = log_1m_chi * log_1m_chi
-    log_1m_chi_3 = log_1m_chi_2 * log_1m_chi
-    log_1m_chi_4 = log_1m_chi_2 * log_1m_chi_2
-    log_sqrt_1m_chi2 = 0.5 * jnp.log1p(-(chi**2))
-    log_sqrt_1m_chi2_2 = log_sqrt_1m_chi2 * log_sqrt_1m_chi2
-    log_sqrt_1m_chi2_3 = log_sqrt_1m_chi2_2 * log_sqrt_1m_chi2
-    log_sqrt_1m_chi2_4 = log_sqrt_1m_chi2_2 * log_sqrt_1m_chi2_2
-    log_sqrt_1m_chi2_5 = log_sqrt_1m_chi2_3 * log_sqrt_1m_chi2_2
-    log_sqrt_1m_chi2_6 = log_sqrt_1m_chi2_3 * log_sqrt_1m_chi2_3
-
-    v = jnp.stack(
-        [
-            1.0,
-            log_1m_chi,
-            log_1m_chi_2,
-            log_1m_chi_3,
-            log_1m_chi_4,
-            log_sqrt_1m_chi2,
-            log_sqrt_1m_chi2_2,
-            log_sqrt_1m_chi2_3,
-            log_sqrt_1m_chi2_4,
-            log_sqrt_1m_chi2_5,
-            log_sqrt_1m_chi2_6,
-        ]
-    )
-
-    return jnp.dot(coeffs, v)
-
-
 def Aellip_from_quadratures(Apx, Apy, Acx, Acy):
     # should be slightly cheaper than calling the two functions separately
     term1 = jnp.sqrt(jnp.square(Acy + Apx) + jnp.square(Acx - Apy))
@@ -348,6 +318,8 @@ def make_model(
     predictive: bool = False,
     store_h_det: bool = False,
     store_h_det_mode: bool = False,
+    qnm_model : str = 'Kerr',
+    qnm_model_kwargs : dict = {}
 ):
     """
     Arguments
@@ -438,6 +410,9 @@ def make_model(
     store_h_det_mode : bool
         Whether to store the mode-by-mode detector-frame waveform in the model.
 
+    qnm_model : str
+        Which model to use. `\\omega_{QNM}(M,\\chi, ...)` 
+
     Returns
     -------
     model : function
@@ -521,6 +496,23 @@ def make_model(
         swsh = construct_sYlm(-2, mode_array[:, 2], mode_array[:, 3])
     else:
         swsh = None
+
+    if isinstance(modes, list):
+        if qnm_model == 'Kerr':
+            chosen_qnm_model = qnm_models.kerr.Kerr(modes)
+
+        elif qnm_model == 'KerrNewman':
+            chosen_qnm_model = qnm_models.kerr_newman.KerrNewman(modes)
+
+        else:
+            # Default to modelling the BH as a Kerr BH
+            chosen_qnm_model = qnm_models.kerr.Kerr(modes)
+
+        # Get prior parameters for this qnm_model and update defaults
+        local_scope = locals();
+        prior_kwargs = {var : local_scope[var] for var in chosen_qnm_model.prior_parameters if var in local_scope.keys()}
+        chosen_qnm_model.prior_kwargs.update(**prior_kwargs)
+        chosen_qnm_model.prior_kwargs.update(**qnm_model_kwargs)
 
     def model(
         times,
@@ -624,21 +616,14 @@ def make_model(
                 f = numpyro.sample("f", dist.Uniform(f_min, f_max))
                 g = numpyro.sample("g", dist.Uniform(g_min, g_max))
         elif isinstance(modes, list):
-            fcoeffs = []
-            gcoeffs = []
-            for mode in modes:
-                c = qnms.KerrMode(mode).coefficients
-                fcoeffs.append(c[0])
-                gcoeffs.append(c[1])
-            fcoeffs = jnp.array(fcoeffs)
-            gcoeffs = jnp.array(gcoeffs)
+            ## Sample the prior over the intrinsic BH parameters
+            intrisic_BH_parameters = chosen_qnm_model.prior_sample()
 
-            m = numpyro.sample("m", dist.Uniform(m_min, m_max))
-            chi = numpyro.sample("chi", dist.Uniform(chi_min, chi_max))
+            ## Get the frequencies and damping rates for these intrinsic BH parameters
+            f_gr, g_gr = chosen_qnm_model.get_freqs_and_gammas(**intrisic_BH_parameters)
 
-            f0 = 1 / (m * qnms.T_MSUN)
-            f_gr = f0 * chi_factors(chi, fcoeffs)
-            g_gr = f0 * chi_factors(chi, gcoeffs)
+            m = intrisic_BH_parameters['m']
+            chi = intrisic_BH_parameters['chi']
 
             if df_min is None or df_max is None:
                 f = numpyro.deterministic("f", f_gr)
