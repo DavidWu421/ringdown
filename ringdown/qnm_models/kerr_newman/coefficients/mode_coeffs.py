@@ -10,6 +10,13 @@ def _to_jnp(arr):
     return jnp.array(arr, dtype=jnp.float64)
 
 
+# Fitting \omega = \Omega - i \gamma with the form: 
+# \Omega= \sum_{j=1}^5 (a_{omega})_j*\sqrt{1-\chi^2}^j + (b_{omega})_j \ln(\sqrt{1-\chi^2})^j
+# -\gamma= \sum_{j=1}^5 (a_{gamma})_j*\sqrt{1-\chi^2}^j + (b_{gamma})_j \ln(\sqrt{1-\chi^2})^j. 
+# Coefficients are in groups of 5 where each group of 5 corresponds to each mode
+#  in the order of [2, 0, 0], [2, 0, 1], [2, 1, 0], [2, 1, 1], [2, 2, 0], 
+# [2, 2, 1], [2, 2, 2], [3, 2, 0], [3, 2, 1], [3, 3, 0], [3, 3, 1], [4, 2, 0], [4, 4, 0]]
+
 # KN Shift fits
 a_omega = [
     _to_jnp(x)
