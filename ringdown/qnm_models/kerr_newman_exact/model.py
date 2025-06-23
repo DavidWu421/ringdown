@@ -5,7 +5,7 @@ import numpyro
 
 mode_to_index = {(1,-2,2,2,0) : 0, (1,-2,2,2,1) : 1}
 
-class KerrNewman:
+class KerrNewmanExact:
 	def __init__(self, modes):
 		self.modes = modes
 		self.indices = []
@@ -13,7 +13,7 @@ class KerrNewman:
 			if mode in mode_to_index.keys():
 				self.indices.append(mode_to_index[mode])
 			else:
-				raise ValueError(f"Don't have computed KerrNewman modes for mode {mode}")
+				raise ValueError(f"Don't have computed KerrNewmanExact modes for mode {mode}")
 
 		self.Y0_bij_omega = jnp.stack([Y0_omega[i] * b_omega[i] for i in self.indices])
 		self.Y0_bij_gamma = jnp.stack([Y0_gamma[i] * b_gamma[i] for i in self.indices])

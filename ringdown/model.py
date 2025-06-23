@@ -501,8 +501,11 @@ def make_model(
         if qnm_model == 'Kerr':
             chosen_qnm_model = qnm_models.kerr.Kerr(modes)
 
-        elif qnm_model == 'KerrNewman':
-            chosen_qnm_model = qnm_models.kerr_newman.KerrNewman(modes)
+        elif qnm_model == 'KerrNewmanPert':
+            chosen_qnm_model = qnm_models.kerr_newman_pert.KerrNewmanPert(modes)
+
+        elif qnm_model == 'KerrNewmanExact':
+            chosen_qnm_model = qnm_models.kerr_newman_exact.KerrNewmanExact(modes)
 
         else:
             # Default to modelling the BH as a Kerr BH
