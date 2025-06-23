@@ -23,7 +23,7 @@ mode_to_index = {
 }
 
 
-class KerrNewman:
+class KerrNewmanPert:
 
     def __init__(self, modes):
         self.modes = modes
@@ -34,7 +34,7 @@ class KerrNewman:
                 self.indices.append(mode_to_index[mode])
             else:
                 raise ValueError(
-                    f"Don't have computed KerrNewman modes for mode {mode}")
+                    f"Don't have computed KerrNewmanPert modes for mode {mode}")
 
         self.aij_omega = jnp.stack([a_omega[i] for i in self.indices])
         self.aij_gamma = jnp.stack([a_gamma[i] for i in self.indices])
