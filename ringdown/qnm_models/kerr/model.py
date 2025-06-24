@@ -63,7 +63,7 @@ class Kerr:
     def prior_parameters(self):
         return self.prior_kwargs.keys()
 
-    def get_freqs_and_gammas(self, m, chi, Q):
+    def get_freqs_and_gammas(self, m, chi):
         f0 = 1 / (m * qnms.T_MSUN)
         f_gr = f0 * chi_factors(chi, self.fcoeffs)
         g_gr = f0 * chi_factors(chi, self.gcoeffs)
