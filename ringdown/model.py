@@ -526,11 +526,16 @@ def make_model(
         # one shared PRNG key for reproducibility inside plate/model
         key_mc = jax.random.key(0)
 
+        if single_polarization:
+            n_qaud = 2
+        else:
+            n_quad = 4
+
         # build the estimator ONCE (dependent only on d and `f`)
         mvn_cdf_estimator = MVNConstraintMC(
             amplitude_constraint_func,
             n   = 100_000,
-            d   = n_quad_n_modes,
+            d   = n_quad * n_modes,
             key = key_mc,
         )
     else:
