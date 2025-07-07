@@ -5,6 +5,7 @@ for ringdown data.
 __all__ = ["make_model", "get_arviz", "rd_design_matrix"]
 
 import numpy as np
+import jax
 import jax.numpy as jnp
 import jax.scipy as jsp
 
