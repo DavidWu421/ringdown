@@ -16,7 +16,7 @@ from . import qnm_models
 from .indexing import ModeIndexList
 from .result import Result
 from .utils.swsh import construct_sYlm, calc_YpYc
-from .utils.mvn_estimator import MVNConstraintMC
+from .utils.mvn_estimator import MVNConstraintMC, MVNMonteCarlo
 
 from typing import Callable
 
@@ -534,7 +534,7 @@ def make_model(
         amplitude_constraint_func = amplitude_constraints['func']
 
         # build the estimator ONCE (dependent only on d and `f`)
-        mvn_cdf_estimator = MVNConstraintMC(
+        mvn_cdf_estimator = MVNMonteCarlo(
             amplitude_constraint_func,
             n   = amplitude_constraints.get('num_samples', 10_000),
             d   = n_quad * n_modes,
@@ -899,6 +899,12 @@ def make_model(
                     )
 
                 quads = mu + jsp.linalg.solve(Lambda_inv_chol.T, unit_quads)
+                if mvn_cdf_estimator is not None:
+                    # `Lambda_inv_chol` is still the Cholesky of the *precision*
+                    # from the last detector update – exactly what we need.
+                    T  = mvn_cdf_estimator.weight_fn(unit_quads)
+
+                    numpyro.factor("logAmplitudePrior", jnp.log(T + 1e-30))
                 get_quad_derived_quantities(
                     n_modes,
                     dms,
@@ -947,8 +953,11 @@ def make_model(
                 )
 
             if mvn_cdf_estimator is not None:
-                constraint_mask = jax.lax.logistic(200*mvn_cdf_estimator.f(quads))
-                numpyro.factor("logConstraint", jnp.log(constraint_mask))
+                # `Lambda_inv_chol` is still the Cholesky of the *precision*
+                # from the last detector update – exactly what we need.
+                T  = mvn_cdf_estimator.weight_fn(quads)
+
+                numpyro.factor("logAmplitudePrior", jnp.log(T + 1e-30))
 
             a, h_det = get_quad_derived_quantities(
                 n_modes,
