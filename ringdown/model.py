@@ -15,6 +15,9 @@ from . import qnm_models
 from .indexing import ModeIndexList
 from .result import Result
 from .utils.swsh import construct_sYlm, calc_YpYc
+from .utils.mvn_estimator import MVNConstraintMC
+
+from typing import Callable
 
 import arviz as az
 from arviz.data.base import dict_to_dataset
@@ -319,7 +322,8 @@ def make_model(
     store_h_det: bool = False,
     store_h_det_mode: bool = False,
     qnm_model : str = 'Kerr',
-    qnm_model_kwargs : dict = {}
+    qnm_model_kwargs : dict = {},
+    amplitude_constraint_func : None | Callable = None
 ):
     """
     Arguments
@@ -517,6 +521,20 @@ def make_model(
         chosen_qnm_model.prior_kwargs.update(**prior_kwargs)
         chosen_qnm_model.prior_kwargs.update(**qnm_model_kwargs)
 
+    if amplitude_constraint_func is not None:
+        # one shared PRNG key for reproducibility inside plate/model
+        key_mc = jax.random.key(0)
+
+        # build the estimator ONCE (dependent only on d and `f`)
+        mvn_cdf_estimator = MVNConstraintMC(
+            amplitude_constraint_func,
+            n   = 100_000,
+            d   = n_quad_n_modes,
+            key = key_mc,
+        )
+    else:
+        mvn_cdf_estimator = None
+
     def model(
         times,
         strains,
@@ -525,7 +543,7 @@ def make_model(
         fcs,
         predictive: bool = predictive,
         store_h_det: bool = store_h_det,
-        store_h_det_mode: bool = store_h_det_mode,
+        store_h_det_mode: bool = store_h_det_mode
     ):
         """The ringdown model.
 
@@ -821,6 +839,17 @@ def make_model(
                     mu = a
                     Lambda_inv = A_inv
                     Lambda_inv_chol = A_inv_chol
+
+                if mvn_cdf_estimator is not None:
+                    # `Lambda_inv_chol` is still the Cholesky of the *precision*
+                    # from the last detector update – exactly what we need.
+                    T  = mvn_cdf_estimator.Z(mu, Lambda_inv_chol)          # scalar
+
+                    # Guard against pathologically small masses that would
+                    # create  -inf  and break AD.
+                    T  = jnp.clip(T, 1e-30, 1.0)
+
+                    numpyro.factor("logT", jnp.log(T))
 
             if predictive:
                 # Generate the actual quadrature amplitudes by taking a draw
