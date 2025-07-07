@@ -16,7 +16,7 @@ from . import qnm_models
 from .indexing import ModeIndexList
 from .result import Result
 from .utils.swsh import construct_sYlm, calc_YpYc
-from .utils.mvn_estimator import MVNConstraintMC, MVNMonteCarlo
+from .utils.mvn_estimator import MVNMonteCarlo
 
 from typing import Callable
 
