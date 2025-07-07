@@ -324,7 +324,7 @@ def make_model(
     store_h_det_mode: bool = False,
     qnm_model : str = 'Kerr',
     qnm_model_kwargs : dict = {},
-    amplitude_constraint_func : None | Callable = None
+    amplitude_constraints : None | dict = None
 ):
     """
     Arguments
@@ -522,7 +522,7 @@ def make_model(
         chosen_qnm_model.prior_kwargs.update(**prior_kwargs)
         chosen_qnm_model.prior_kwargs.update(**qnm_model_kwargs)
 
-    if amplitude_constraint_func is not None:
+    if amplitude_constraints is not None:
         # one shared PRNG key for reproducibility inside plate/model
         key_mc = jax.random.key(0)
 
@@ -531,10 +531,12 @@ def make_model(
         else:
             n_quad = 4
 
+        amplitude_constraint_func = amplitude_constraints['func']
+
         # build the estimator ONCE (dependent only on d and `f`)
         mvn_cdf_estimator = MVNConstraintMC(
             amplitude_constraint_func,
-            n   = 100_000,
+            n   = amplitude_constraints['num_samples'],
             d   = n_quad * n_modes,
             key = key_mc,
         )
@@ -943,6 +945,10 @@ def make_model(
                 quads = jnp.concatenate(
                     (apx_unit, apy_unit, acx_unit, acy_unit)
                 )
+
+            if mvn_cdf_estimator is not None:
+                constraint_mask = jax.lax.logistic(10*mvn_cdf_estimator.f(quads))
+                numpyro.factor("logConstraint", jnp.log(constraint_mask))
 
             a, h_det = get_quad_derived_quantities(
                 n_modes,
