@@ -855,9 +855,9 @@ def make_model(
 
                     # Guard against pathologically small masses that would
                     # create  -inf  and break AD.
-                    T  = jnp.clip(T, 1e-30, 1.0)
+                    T  = jnp.clip(T, 1e-30, jnp.inf)
 
-                    numpyro.factor("logT", jnp.log(T))
+                    #numpyro.factor("logT", jnp.log(T))
 
             if predictive:
                 # Generate the actual quadrature amplitudes by taking a draw
@@ -902,9 +902,9 @@ def make_model(
                 if mvn_cdf_estimator is not None:
                     # `Lambda_inv_chol` is still the Cholesky of the *precision*
                     # from the last detector update – exactly what we need.
-                    T  = mvn_cdf_estimator.weight_fn(unit_quads)
+                    T  = mvn_cdf_estimator.weight_fn(quads)
 
-                    numpyro.factor("logAmplitudePrior", jnp.log(T + 1e-30))
+                    #numpyro.factor("logAmplitudePrior", jnp.log(T + 1e-30))
                 get_quad_derived_quantities(
                     n_modes,
                     dms,
