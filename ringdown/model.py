@@ -536,7 +536,7 @@ def make_model(
         # build the estimator ONCE (dependent only on d and `f`)
         mvn_cdf_estimator = MVNConstraintMC(
             amplitude_constraint_func,
-            n   = amplitude_constraints['num_samples'],
+            n   = amplitude_constraints.get('num_samples', 10_000),
             d   = n_quad * n_modes,
             key = key_mc,
         )
@@ -947,7 +947,7 @@ def make_model(
                 )
 
             if mvn_cdf_estimator is not None:
-                constraint_mask = jax.lax.logistic(10*mvn_cdf_estimator.f(quads))
+                constraint_mask = jax.lax.logistic(200*mvn_cdf_estimator.f(quads))
                 numpyro.factor("logConstraint", jnp.log(constraint_mask))
 
             a, h_det = get_quad_derived_quantities(
