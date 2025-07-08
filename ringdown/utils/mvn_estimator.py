@@ -25,7 +25,7 @@ def _make_Z_single(weight_fn, u):
     # ---------------- forward & backward ---------------------------
     def fwd(mu, L):
         x = mu + jsp.solve_triangular(L, u.T, lower=True, trans="T").T
-        w = weight_fn(x).reshape(-1)            # ensure (n,)
+        w = weight_fn(x)#.reshape(-1)            # ensure (n,)
         diff = x - mu                           # (n,d)
         return jnp.mean(w), (diff, w, L)
 

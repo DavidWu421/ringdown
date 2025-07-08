@@ -851,11 +851,11 @@ def make_model(
                 if mvn_cdf_estimator is not None:
                     # `Lambda_inv_chol` is still the Cholesky of the *precision*
                     # from the last detector update – exactly what we need.
-                    T  = mvn_cdf_estimator.Z(mu, Lambda_inv_chol)          # scalar
+                    T  = mvn_cdf_estimator.Z(mu, Lambda_inv_chol)          # scalar 
 
                     # Guard against pathologically small masses that would
                     # create  -inf  and break AD.
-                    T  = jnp.clip(T, 1e-30, jnp.inf)
+                    #T  = jnp.clip(T, 1e-30, jnp.inf)
 
                     numpyro.factor("logT", jnp.log(T))
 
