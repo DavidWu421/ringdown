@@ -904,7 +904,7 @@ def make_model(
                     # from the last detector update – exactly what we need.
                     T  = mvn_cdf_estimator.weight_fn(quads)
 
-                    #numpyro.factor("logAmplitudePrior", jnp.log(T + 1e-30))
+                    numpyro.factor("logAmplitudePrior", jnp.log(T + 1e-30))
                 get_quad_derived_quantities(
                     n_modes,
                     dms,
