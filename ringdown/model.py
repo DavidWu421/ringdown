@@ -548,6 +548,7 @@ def make_model(
                 dominant_amplitude_setter = MaxAmplitudeAtIndexSampler(n_modes, dominant_mode_index)
             else:
                 dominant_amplitude_setter = None
+                mvn_cdf_estimator = None
     else:
         mvn_cdf_estimator = None
         dominant_amplitude_setter = None
