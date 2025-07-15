@@ -17,6 +17,7 @@ from .indexing import ModeIndexList
 from .result import Result
 from .utils.swsh import construct_sYlm, calc_YpYc
 from .utils.mvn_estimator import MVNMonteCarlo
+from .utils.amplitude_prior_model import MaxAmplitudeAtIndexSampler
 
 from typing import Callable
 
@@ -523,25 +524,33 @@ def make_model(
         chosen_qnm_model.prior_kwargs.update(**qnm_model_kwargs)
 
     if amplitude_constraints is not None:
-        # one shared PRNG key for reproducibility inside plate/model
-        key_mc = jax.random.key(0)
+        if marginalized
+            # one shared PRNG key for reproducibility inside plate/model
+            key_mc = jax.random.key(0)
 
-        if single_polarization:
-            n_qaud = 2
+            if single_polarization:
+                n_qaud = 2
+            else:
+                n_quad = 4
+
+            amplitude_constraint_func = amplitude_constraints['func']
+
+            # build the estimator ONCE (dependent only on d and `f`)
+            mvn_cdf_estimator = MVNMonteCarlo(
+                amplitude_constraint_func,
+                n   = amplitude_constraints.get('num_samples', 10_000),
+                d   = n_quad * n_modes,
+                key = key_mc,
+            )
         else:
-            n_quad = 4
-
-        amplitude_constraint_func = amplitude_constraints['func']
-
-        # build the estimator ONCE (dependent only on d and `f`)
-        mvn_cdf_estimator = MVNMonteCarlo(
-            amplitude_constraint_func,
-            n   = amplitude_constraints.get('num_samples', 10_000),
-            d   = n_quad * n_modes,
-            key = key_mc,
-        )
+            if 'dominant_mode_index' in amplitude_constraints.keys():
+                dominant_mode_index = amplitude_constraints['dominant_mode_index']
+                dominant_amplitude_setter = MaxAmplitudeAtIndexSampler(n_modes, dominant_mode_index)
+            else:
+                dominant_amplitude_setter = None
     else:
         mvn_cdf_estimator = None
+        dominant_amplitude_setter = None
 
     def model(
         times,
@@ -928,28 +937,34 @@ def make_model(
                 single_polarization=single_polarization,
             )
             if swsh or single_polarization:
-                ax_unit = numpyro.sample(
-                    "ax_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
-                )
-                ay_unit = numpyro.sample(
-                    "ay_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
-                )
+                if dominant_amplitude_setter is None:
+                    ax_unit = numpyro.sample(
+                        "ax_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
+                    )
+                    ay_unit = numpyro.sample(
+                        "ay_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
+                    )
+                else:
+                     ax_unit, ay_unit = sampler.sample_single_pol()
                 quads = jnp.concatenate((ax_unit, ay_unit))
             else:
-                apx_unit = numpyro.sample(
-                    "apx_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
-                )
-                apy_unit = numpyro.sample(
-                    "apy_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
-                )
-                acx_unit = numpyro.sample(
-                    "acx_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
-                )
-                acy_unit = numpyro.sample(
-                    "acy_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
-                )
+                if dominant_amplitude_setter is None:
+                    apx_unit = numpyro.sample(
+                        "apx_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
+                    )
+                    apy_unit = numpyro.sample(
+                        "apy_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
+                    )
+                    acx_unit = numpyro.sample(
+                        "acx_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
+                    )
+                    acy_unit = numpyro.sample(
+                        "acy_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
+                    )
+                else:
+                    apx_unit, apy_unit, acx_unit, acy_unit = sampler.sample()
                 quads = jnp.concatenate(
-                    (apx_unit, apy_unit, acx_unit, acy_unit)
+                    (apx_unit, apy_unit, acx_unit, acy_unit)9182024
                 )
 
             if mvn_cdf_estimator is not None:
