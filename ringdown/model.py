@@ -524,7 +524,7 @@ def make_model(
         chosen_qnm_model.prior_kwargs.update(**qnm_model_kwargs)
 
     if amplitude_constraints is not None:
-        if marginalized
+        if marginalized:
             # one shared PRNG key for reproducibility inside plate/model
             key_mc = jax.random.key(0)
 
