@@ -946,7 +946,7 @@ def make_model(
                         "ay_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
                     )
                 else:
-                     ax_unit, ay_unit = sampler.sample_single_pol()
+                     ax_unit, ay_unit = dominant_amplitude_setter.sample_single_pol()
                 quads = jnp.concatenate((ax_unit, ay_unit))
             else:
                 if dominant_amplitude_setter is None:
@@ -963,7 +963,7 @@ def make_model(
                         "acy_unit", dist.Normal(0, 1), sample_shape=(n_modes,)
                     )
                 else:
-                    apx_unit, apy_unit, acx_unit, acy_unit = sampler.sample()
+                    apx_unit, apy_unit, acx_unit, acy_unit = dominant_amplitude_setter.sample()
                 quads = jnp.concatenate(
                     (apx_unit, apy_unit, acx_unit, acy_unit)
                 )
