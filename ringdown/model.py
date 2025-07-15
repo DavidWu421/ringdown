@@ -965,7 +965,7 @@ def make_model(
                 else:
                     apx_unit, apy_unit, acx_unit, acy_unit = sampler.sample()
                 quads = jnp.concatenate(
-                    (apx_unit, apy_unit, acx_unit, acy_unit)9182024
+                    (apx_unit, apy_unit, acx_unit, acy_unit)
                 )
 
             if mvn_cdf_estimator is not None:
