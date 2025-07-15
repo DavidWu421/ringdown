@@ -33,10 +33,10 @@ class MaxAmplitudeAtIndexSampler:
         i = self.index
 
         # 1. draw *all* quadratures
-        apx = numpyro.sample("apx_unit", dist.Normal(0, 1), sample_shape=(n,))
-        apy = numpyro.sample("apy_unit", dist.Normal(0, 1), sample_shape=(n,))
-        acx = numpyro.sample("acx_unit", dist.Normal(0, 1), sample_shape=(n,))
-        acy = numpyro.sample("acy_unit", dist.Normal(0, 1), sample_shape=(n,))
+        apx = numpyro.sample("apx_unit_0", dist.Normal(0, 1), sample_shape=(n,))
+        apy = numpyro.sample("apy_unit_0", dist.Normal(0, 1), sample_shape=(n,))
+        acx = numpyro.sample("acx_unit_0", dist.Normal(0, 1), sample_shape=(n,))
+        acy = numpyro.sample("acy_unit_0", dist.Normal(0, 1), sample_shape=(n,))
 
         # 2. compute amplitude A for every mode
         term1 = jnp.sqrt(jnp.square(acy + apx) + jnp.square(acx - apy))
@@ -57,10 +57,15 @@ class MaxAmplitudeAtIndexSampler:
         perm = perm.at[j_max].set(i)
 
         # 4. apply the same permutation to every quadrature vector
-        apx = apx[perm]
-        apy = apy[perm]
-        acx = acx[perm]
-        acy = acy[perm]
+        apx_ = apx[perm]
+        apy_ = apy[perm]
+        acx_ = acx[perm]
+        acy_ = acy[perm]
+
+        apx = numpyro.deterministic("apx_unit", apx_)
+        apy = numpyro.deterministic("apy_unit", apy_)
+        acx = numpyro.deterministic("acx_unit", acx_)
+        acy = numpyro.deterministic("acy_unit", acy_)
 
         # check (optional, useful in testing)
         numpyro.deterministic("A_values_after_swap",
