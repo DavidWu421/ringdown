@@ -33,14 +33,14 @@ class MaxAmplitudeAtIndexSampler:
         i = self.index
 
         # 1. draw *all* quadratures
-        apx = numpyro.sample("apx_unit_0", dist.Normal(0, 1), sample_shape=(n,))
-        apy = numpyro.sample("apy_unit_0", dist.Normal(0, 1), sample_shape=(n,))
-        acx = numpyro.sample("acx_unit_0", dist.Normal(0, 1), sample_shape=(n,))
-        acy = numpyro.sample("acy_unit_0", dist.Normal(0, 1), sample_shape=(n,))
+        apx0 = numpyro.sample("apx_unit_0", dist.Normal(0, 1), sample_shape=(n,))
+        apy0 = numpyro.sample("apy_unit_0", dist.Normal(0, 1), sample_shape=(n,))
+        acx0 = numpyro.sample("acx_unit_0", dist.Normal(0, 1), sample_shape=(n,))
+        acy0 = numpyro.sample("acy_unit_0", dist.Normal(0, 1), sample_shape=(n,))
 
         # 2. compute amplitude A for every mode
-        term1 = jnp.sqrt(jnp.square(acy + apx) + jnp.square(acx - apy))
-        term2 = jnp.sqrt(jnp.square(acy - apx) + jnp.square(acx + apy))
+        term1 = jnp.sqrt(jnp.square(acy0 + apx0) + jnp.square(acx0 - apy0))
+        term2 = jnp.sqrt(jnp.square(acy0 - apx0) + jnp.square(acx0 + apy0))
         A     = 0.5 * (term1 + term2)                           # shape (n,)
 
         # 3. identify the winning mode and build a permutation that
@@ -57,10 +57,10 @@ class MaxAmplitudeAtIndexSampler:
         perm = perm.at[j_max].set(i)
 
         # 4. apply the same permutation to every quadrature vector
-        apx_ = apx[perm]
-        apy_ = apy[perm]
-        acx_ = acx[perm]
-        acy_ = acy[perm]
+        apx_ = apx0[perm]
+        apy_ = apy0[perm]
+        acx_ = acx0[perm]
+        acy_ = acy0[perm]
 
         apx = numpyro.deterministic("apx_unit", apx_)
         apy = numpyro.deterministic("apy_unit", apy_)
