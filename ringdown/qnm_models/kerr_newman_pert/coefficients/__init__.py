@@ -24,12 +24,12 @@ bij_omega = jnp.stack(b_omega, dtype=jnp.float64)
 bij_gamma = jnp.stack(b_gamma, dtype=jnp.float64)
 
 
-# Main function for computing omega/gamma values
-def jnp_chiq_exact_factors(chi, Y0, aij, bij):
-    chi_powers = chi**(jnp.arange(3)[:, None] + 1)
-    num = jnp.einsum('ij,jk->ik', aij, chi_powers).flatten()
-    den = jnp.einsum('ij,jk->ik', bij, chi_powers).flatten()
-    return (Y0 * (1 + num) / (1 + den)).flatten()
+# # Main function for computing omega/gamma values
+# def jnp_chiq_exact_factors(chi, Y0, aij, bij):
+#     chi_powers = chi**(jnp.arange(3)[:, None] + 1)
+#     num = jnp.einsum('ij,jk->ik', aij, chi_powers).flatten()
+#     den = jnp.einsum('ij,jk->ik', bij, chi_powers).flatten()
+#     return (Y0 * (1 + num) / (1 + den)).flatten()
 
 
 def get_poly_chi_basis(chi):

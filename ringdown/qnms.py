@@ -69,7 +69,7 @@ class KerrMode(object):
     def compute_coefficients(mode, **kws):
         p, s, l, m, n = mode
         sgn = p if m == 0 else p * np.sign(m)
-        q = qnm.modes_cache(s, l, p * abs(m), n)
+        q = qnm.modes_cache(s, abs(l), p * abs(m), n)
 
         # Only use spins pre-computed by qnm package
         chis = np.array(q.a)
