@@ -513,8 +513,8 @@ def make_model(
         elif qnm_model == 'KerrNewmanExact':
             chosen_qnm_model = qnm_models.kerr_newman_exact.KerrNewmanExact(modes)
 
-        elif qnm_model == 'Cubic':
-            chosen_qnm_model = qnm_models.cubic.Cubic(modes)
+        elif qnm_model == 'EvenCubic':
+            chosen_qnm_model = qnm_models.even_cubic.EvenCubic(modes)
 
         else:
             # Default to modelling the BH as a Kerr BH

@@ -36,7 +36,7 @@ mode_to_index = {
 }
 
 
-class Cubic:
+class EvenCubic:
 
     def __init__(self, modes):
         self.modes = modes
@@ -47,7 +47,7 @@ class Cubic:
                 self.indices.append(mode_to_index[mode])
             else:
                 raise ValueError(
-                    f"Don't have computed Cubic modes for mode {mode}")
+                    f"Don't have computed EvenCubic modes for mode {mode}")
 
         self.aij_omega = jnp.stack([a_omega[i] for i in self.indices])
         self.aij_gamma = jnp.stack([a_gamma[i] for i in self.indices])
@@ -82,7 +82,7 @@ class Cubic:
         gamma = kerrmod.chi_factors(chi, self.kerr_modes.gcoeffs)
         return omega, gamma
 
-    def get_cubic_omega(self, chi, alpha):
+    def get_even_cubic_omega(self, chi, alpha):
         omega_kerr, gamma_kerr = self.get_kerr_omega(chi)
         omega = omega_kerr + alpha * compute_shifts(chi, self.aij_omega).flatten()
         gamma = (gamma_kerr + alpha *
@@ -94,15 +94,15 @@ class Cubic:
         FREF = 2985.668287014743
         MREF = 68.0
         f0 = FREF * MREF / M
-        omega0, gamma0 = self.get_cubic_omega(chi, alpha)
-        omega_c = f0 * self.get_cubic_omega(chi, alpha)
+        omega0, gamma0 = self.get_even_cubic_omega(chi, alpha)
+        omega_c = f0 * self.get_even_cubic_omega(chi, alpha)
         freqs = f0 * omega0 / (2 * jnp.pi)
         taus = -1.0 / gamma0
         return freqs, taus
 
     def get_freqs_and_gammas(self, m, chi, alpha):
         f0 = 1 / (m * qnms.T_MSUN)
-        f_gr_0, g_gr_0 = self.get_cubic_omega(chi, alpha)
+        f_gr_0, g_gr_0 = self.get_even_cubic_omega(chi, alpha)
         f_gr = f0 * f_gr_0 / (2 * jnp.pi)
         g_gr = f0 * g_gr_0
         return f_gr, g_gr

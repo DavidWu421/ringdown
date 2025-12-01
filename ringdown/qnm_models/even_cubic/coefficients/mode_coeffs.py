@@ -38,7 +38,7 @@ if not folder.exists():
 # List all files in the Fits directory
 files = list(folder.iterdir())  # returns Path objects
 
-def get_cubic_coeffs_from_file(filename: Path):
+def get_even_cubic_coeffs_from_file(filename: Path):
     """
     Read real and imaginary coefficients from a file.
     Pads the lists with zeros up to length 16 if needed.
@@ -64,7 +64,7 @@ def get_cubic_coeffs_from_file(filename: Path):
 
     return real_coeffs, imag_coeffs
 
-def get_cubic_mode_coeffs(mode):
+def get_even_cubic_mode_coeffs(mode):
     """
     mode: [l, m, n]
     parity: l>0 for even, l<0 for odd
@@ -84,12 +84,12 @@ def get_cubic_mode_coeffs(mode):
     filename = folder / f"cubic_even_{parity}_l{abs(l)}_m{m}_n{n}.txt"
 
     # Call the file-reading function
-    return get_cubic_coeffs_from_file(filename)
+    return get_even_cubic_coeffs_from_file(filename)
 
 real_mode_coeffs=[]
 imag_mode_coeffs=[]
 for mode in mode_list:
-    real_coeffs,imag_coeffs = get_cubic_mode_coeffs(mode)
+    real_coeffs,imag_coeffs = get_even_cubic_mode_coeffs(mode)
     real_mode_coeffs.append(real_coeffs)
     imag_mode_coeffs.append(imag_coeffs)
 

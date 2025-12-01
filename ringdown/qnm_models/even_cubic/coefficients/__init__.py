@@ -44,7 +44,7 @@ def compute_shifts(chi, aij):
     return poly_term
 
 
-def get_charged_omega_shifts(chi, alpha):
+def get_even_cubic_omega_shifts(chi, alpha):
     omega = compute_shifts(chi, aij_omega).astype(jnp.complex64)
     gamma = compute_shifts(chi, aij_gamma).astype(jnp.complex64)
     return (alpha * (omega + 1j * gamma)).flatten()
