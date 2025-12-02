@@ -516,6 +516,9 @@ def make_model(
         elif qnm_model == 'EvenCubic':
             chosen_qnm_model = qnm_models.even_cubic.EvenCubic(modes)
 
+        elif qnm_model == 'OddCubic':
+            chosen_qnm_model = qnm_models.odd_cubic.OddCubic(modes)
+
         else:
             # Default to modelling the BH as a Kerr BH
             chosen_qnm_model = qnm_models.kerr.Kerr(modes)
