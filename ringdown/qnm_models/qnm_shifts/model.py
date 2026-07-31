@@ -164,8 +164,8 @@ class ShiftedQNMs:
 		self.gcoeffs = jnp.array(self.gcoeffs)
 
 		self.prior_kwargs = {'m_min' : 40, 'm_max' : 200, 
-							 'chi_min' : 0.0,  'chi_max' : 1.0,
-							 'Q_min' : 0.0, 'Q_max' : 1.0,
+							 'chi_min' : 0.0,  'chi_max' : 1.0,  'alpha_min': 0.0,
+                             'alpha_max': 1.0, 'Q_min' : 0.0, 'Q_max' : 1.0,
 							 'phi_chiQ_min' : 0.0, 'phi_chiQ_max' : jnp.pi/2,
 							 'half_r_squared_chiQ_min' : 0.0, 'half_r_squared_chiQ_max' : 1/2}
 

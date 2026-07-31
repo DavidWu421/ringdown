@@ -58,7 +58,7 @@ class EvenCubic:
             'chi_min': 0.0,
             'chi_max': 1.0,
             'alpha_min': 0.0,
-            'alpha_max': 0.1,
+            'alpha_max': 1.0,
             'Q_min': 0.0,
             'Q_max': 1.0,
             'phi_chiQ_min': 0.0,
