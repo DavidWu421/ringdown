@@ -3,3 +3,4 @@ from .kerr_newman_pert import *
 from .kerr_newman_exact import *
 from .even_cubic import *
 from .odd_cubic import *
+from .jp import *

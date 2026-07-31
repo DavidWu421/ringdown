@@ -305,6 +305,10 @@ def make_model(
     m_max: float | None = None,
     chi_min: float = 0.0,
     chi_max: float = 0.99,
+    Q_min: float = 0.0,
+    Q_max: float = 0.999,
+    alpha_min: float = 0.0,
+    alpha_max: float = 1.0,
     cosi_min: float | None = None,
     cosi_max: float | None = None,
     cosi: float | None = None,
@@ -518,6 +522,9 @@ def make_model(
 
         elif qnm_model == 'OddCubic':
             chosen_qnm_model = qnm_models.odd_cubic.OddCubic(modes)
+
+        elif qnm_model == 'JP':
+            chosen_qnm_model = qnm_models.jp.JP(modes)
 
         else:
             # Default to modelling the BH as a Kerr BH
