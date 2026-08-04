@@ -109,9 +109,20 @@ class JP:
         g_gr = f0 * g_gr_0
         return f_gr, g_gr
 
+    @staticmethod
+    def _epsilon_max(a):
+        """Max alpha (epsilon) for JP metric to remain a black hole (not naked singularity),
+        as a function of dimensionless spin a = chi."""
+        a2 = a**2
+        # avoid 0/0 at a=0; true limit there is +inf (no constraint), so a tiny floor is fine
+        safe_a2 = jnp.where(a2 > 1e-12, a2, 1e-12)
+        s = jnp.sqrt(jnp.clip(16 - 15 * a2, a_min=0.0))
+        eps = 2 * (4 + s)**3 * (4 - 5 * a2 + s) / (3125 * safe_a2)
+        return jnp.where(a2 > 1e-12, eps, jnp.inf)
+    
     def prior_sample(self):
         variables = {}
-        for var in ['m', 'chi', 'alpha']:
+        for var in ['m', 'chi']:
             variable_prior_distribution = dist.Uniform(
                 self.prior_kwargs[f'{var}_min'],
                 self.prior_kwargs[f'{var}_max'])
@@ -119,5 +130,13 @@ class JP:
 
         m = variables['m']
         chi = variables['chi']
-        alpha = variables['alpha']
+
+        eps_max = self._epsilon_max(chi)
+
+        # only an upper bound on alpha; lower bound is whatever the user configured
+        alpha_lo = self.prior_kwargs['alpha_min']
+        alpha_hi = jnp.minimum(self.prior_kwargs['alpha_max'], eps_max)
+
+        alpha = numpyro.sample('alpha', dist.Uniform(alpha_lo, alpha_hi))
+
         return {'m': m, 'chi': chi, 'alpha': alpha}
