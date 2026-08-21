@@ -91,28 +91,41 @@ class Ringdown(Signal):
     @staticmethod
     def _construct_parameters(ndmin=0, **kws):
         kws = {k.lower(): v for k, v in kws.items()}
-        # define parameters that will take precedence for storage
         pars = {
             k: np.array(kws.pop(k), ndmin=ndmin)
             for k in list(kws.keys())
             if k in Ringdown._MODE_PARS
         }
-        # obtain frequencies from remnant parameters if necessary
+
         freq_keys = ["omega", "gamma", "f", "tau"]
+        qnm_model = kws.pop("qnm_model", "Kerr")
+        qnm_model_kwargs = kws.pop("qnm_model_kwargs", {})
+
         if "modes" in kws and not any([k in kws for k in freq_keys]):
-            kws["approx"] = kws.get("approx", False)
-            kws["f"], kws["tau"] = [], []
-            for m in kws["modes"]:
-                f, tau = qnms.KerrMode(m).ftau(
-                    kws["chi"], kws["m"], kws["approx"]
+            if qnm_model.lower() == "kerr":
+                kws["approx"] = kws.get("approx", False)
+                kws["f"], kws["tau"] = [], []
+                for m in kws["modes"]:
+                    f, tau = qnms.KerrMode(m).ftau(
+                        kws["chi"], kws["m"], kws["approx"]
+                    )
+                    kws["f"].append(f)
+                    kws["tau"].append(tau)
+            else:
+                from .. import qnm_models
+                model_cls = {
+                    "jp": qnm_models.jp.JP,
+                    "kerrnewmanpert": qnm_models.kerr_newman_pert.KerrNewmanPert,
+                    "kerrnewmanexact": qnm_models.kerr_newman_exact.KerrNewmanExact,
+                    "evencubic": qnm_models.even_cubic.EvenCubic,
+                    "oddcubic": qnm_models.odd_cubic.OddCubic,
+                }[qnm_model.lower()]
+                m = model_cls(kws["modes"])
+                f, g = m.get_freqs_and_gammas(
+                    kws["m"], kws["chi"], **qnm_model_kwargs
                 )
-                kws["f"].append(f)
-                kws["tau"].append(tau)
-        # frequency parameters
-        if "f" in kws and "omega" not in kws:
-            pars["omega"] = 2 * np.pi * np.array(kws.pop("f"), ndmin=ndmin)
-        if "tau" in kws and "gamma" not in kws:
-            pars["gamma"] = 1 / np.array(kws.pop("tau"), ndmin=ndmin)
+                kws["f"] = np.asarray(f)
+                kws["tau"] = 1.0 / np.asarray(g)  # g is a decay rate, not tau
         pars.update(kws)
         return pars
 
