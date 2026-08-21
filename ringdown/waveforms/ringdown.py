@@ -126,6 +126,12 @@ class Ringdown(Signal):
                 )
                 kws["f"] = np.asarray(f)
                 kws["tau"] = 1.0 / np.asarray(g)  # g is a decay rate, not tau
+
+        if "f" in kws and "omega" not in kws:
+            pars["omega"] = 2 * np.pi * np.array(kws.pop("f"), ndmin=ndmin)
+        if "tau" in kws and "gamma" not in kws:
+            pars["gamma"] = 1 / np.array(kws.pop("tau"), ndmin=ndmin)
+
         pars.update(kws)
         return pars
 
