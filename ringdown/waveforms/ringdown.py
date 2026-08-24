@@ -120,12 +120,13 @@ class Ringdown(Signal):
                     "evencubic": qnm_models.even_cubic.EvenCubic,
                     "oddcubic": qnm_models.odd_cubic.OddCubic,
                 }[qnm_model.lower()]
-                m = model_cls(kws["modes"])
+                modes_tuples = [tuple(mode) for mode in kws["modes"]]
+                m = model_cls(modes_tuples)
                 f, g = m.get_freqs_and_gammas(
                     kws["m"], kws["chi"], **qnm_model_kwargs
                 )
                 kws["f"] = np.asarray(f)
-                kws["tau"] = 1.0 / np.asarray(g)  # g is a decay rate, not tau
+                kws["tau"] = 1.0 / np.asarray(g)
 
         if "f" in kws and "omega" not in kws:
             pars["omega"] = 2 * np.pi * np.array(kws.pop("f"), ndmin=ndmin)
