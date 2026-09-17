@@ -6,4 +6,5 @@ back on. The fits take the form (VALID FOR \chi\in[0,.99]):
 \delta\omega(l,m,n,\chi,Even/Odd,Re/Im)=\sum_{n=0}^{9} a_n log(1-\chi^2)^n
 
 In general, these fits are within about 1% of the actual value in the applicable regime. Better fits are possible,
-they're just not really necessary given the quality of data.
+they're just not really necessary given the quality of data. If you actually are using the m<0 modes, new fits are
+probably better. They're a bit sketchy for those modes.
