@@ -2,7 +2,6 @@ import jax.numpy as jnp
 import numpyro
 import numpyro.distributions as dist
 from ... import qnms
-from ..spin_prior import SpinPriorMixin
 
 
 def chi_factors(chi, coeffs):
@@ -34,7 +33,7 @@ def chi_factors(chi, coeffs):
     return jnp.dot(coeffs, v)
 
 
-class Kerr(SpinPriorMixin): 
+class Kerr:
 
     def __init__(self, modes):
         self.modes = modes
@@ -52,8 +51,6 @@ class Kerr(SpinPriorMixin):
             'm_max': 200,
             'chi_min': 0.0,
             'chi_max': 1.0,
-            'chi_prior': 'uniform',
-            'chi_prior_path': None,
             'alpha_min': 0.0,
             'alpha_max': 1.0,
             'Q_min': 0.0,
@@ -76,11 +73,12 @@ class Kerr(SpinPriorMixin):
 
     def prior_sample(self):
         variables = {}
-        m = numpyro.sample(
-            'm', dist.Uniform(self.prior_kwargs['m_min'],
-                               self.prior_kwargs['m_max'])
-        )
-        chi = self.sample_chi()
-        variables['m'] = m
-        variables['chi'] = chi
-        return variables
+        for var in ['m', 'chi']:
+            variable_prior_distribution = dist.Uniform(
+                self.prior_kwargs[f'{var}_min'],
+                self.prior_kwargs[f'{var}_max'])
+            variables[var] = numpyro.sample(var, variable_prior_distribution)
+
+        m = variables['m']
+        chi = variables['chi']
+        return {'m': m, 'chi': chi}

@@ -2,11 +2,10 @@ from .coefficients import *
 from ... import qnms
 import numpyro.distributions as dist
 import numpyro
-from ..spin_prior import SpinPriorMixin 
 
 mode_to_index = {(1,-2,2,2,0) : 0, (1,-2,2,2,1) : 1}
 
-class KerrNewmanExact(SpinPriorMixin):
+class KerrNewmanExact:
 	def __init__(self, modes):
 		self.modes = modes
 		self.indices = []
@@ -22,9 +21,7 @@ class KerrNewmanExact(SpinPriorMixin):
 		self.cij_gamma = jnp.stack([c_gamma[i] for i in self.indices])
 
 		self.prior_kwargs = {'m_min' : 40, 'm_max' : 200, 
-							 'chi_min' : 0.0,  'chi_max' : 1.0, 
-							 'chi_prior': 'uniform', 'chi_prior_path': None,
-							 'alpha_min': 0.0,
+							 'chi_min' : 0.0,  'chi_max' : 1.0, 'alpha_min': 0.0,
             				 'alpha_max': 1.0, 'Q_min' : 0.0, 'Q_max' : 1.0,
 							 'phi_chiQ_min' : 0.0, 'phi_chiQ_max' : jnp.pi/2,
 							 'half_r_squared_chiQ_min' : 0.0, 'half_r_squared_chiQ_max' : 1/2}
