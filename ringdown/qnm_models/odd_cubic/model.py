@@ -3,6 +3,7 @@ from ..kerr import model as kerrmod
 from ... import qnms
 import numpyro.distributions as dist
 import numpyro
+from ..spin_prior import SpinPriorMixin 
 
 jax.config.update("jax_enable_x64", True)
 
@@ -36,7 +37,7 @@ mode_to_index = {
 }
 
 
-class OddCubic:
+class OddCubic(SpinPriorMixin):
 
     def __init__(self, modes):
         self.modes = modes
@@ -57,6 +58,8 @@ class OddCubic:
             'm_max': 200,
             'chi_min': 0.0,
             'chi_max': 1.0,
+            'chi_prior': 'uniform', 
+            'chi_prior_path': None, 
             'alpha_min': 0.0,
             'alpha_max': 1.0,
             'Q_min': 0.0,
@@ -109,13 +112,11 @@ class OddCubic:
 
     def prior_sample(self):
         variables = {}
-        for var in ['m', 'chi', 'alpha']:
-            variable_prior_distribution = dist.Uniform(
-                self.prior_kwargs[f'{var}_min'],
-                self.prior_kwargs[f'{var}_max'])
-            variables[var] = numpyro.sample(var, variable_prior_distribution)
-
-        m = variables['m']
-        chi = variables['chi']
-        alpha = variables['alpha']
-        return {'m': m, 'chi': chi, 'alpha': alpha}
+        for var in ['m', 'chi', 'alpha']:      # whatever the model's vars are
+            if var == 'chi':
+                variables['chi'] = self.sample_chi()
+                continue
+            d = dist.Uniform(self.prior_kwargs[f'{var}_min'],
+                            self.prior_kwargs[f'{var}_max'])
+            variables[var] = numpyro.sample(var, d)
+        return variables
