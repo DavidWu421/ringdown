@@ -18,6 +18,7 @@ from .result import Result
 from .utils.swsh import construct_sYlm, calc_YpYc
 from .utils.mvn_estimator import MVNMonteCarlo
 from .utils.amplitude_prior_model import MaxAmplitudeAtIndexSampler
+from .utils.tabulated_prior import make_tabulated_log_prior
 
 from typing import Callable
 
@@ -305,6 +306,7 @@ def make_model(
     m_max: float | None = None,
     chi_min: float = 0.0,
     chi_max: float = 0.99,
+    chi_prior: None | str = None,
     Q_min: float = 0.0,
     Q_max: float = 0.999,
     alpha_min: float = 0.0,
@@ -359,6 +361,13 @@ def make_model(
 
     chi_max : float
         The maximum dimensionless spin of the black hole.
+
+    chi_prior : None or str
+        Prior on the remnant spin. `None` (or 'uniform') gives a flat prior
+        on [chi_min, chi_max]. Otherwise, the name of a file in
+        ringdown/priors/ (e.g., 'remnant_spin_kde') or a path to a
+        two-column (chi, pdf) text file; the flat prior is multiplied by
+        this pdf.
 
     cosi_min : float or None
         The minimum inclination angle to the angular orbital momentum of the
@@ -531,6 +540,15 @@ def make_model(
             chosen_qnm_model = qnm_models.kerr.Kerr(modes)
 
         # Get prior parameters for this qnm_model and update defaults
+        chi_log_prior = make_tabulated_log_prior(chi_prior)
+        if chi_log_prior is not None:
+            if not isinstance(modes, list):
+                raise ValueError("chi_prior requires explicit (Kerr-like) modes")
+            if qnm_model in ("KerrNewmanPert", "KerrNewmanExact"):
+                raise ValueError(
+                    "chi_prior is not supported for Kerr-Newman models, whose "
+                    "spin is sampled through (r, phi)"
+                )
         local_scope = locals();
         prior_kwargs = {var : local_scope[var] for var in chosen_qnm_model.prior_parameters if var in local_scope.keys()}
         chosen_qnm_model.prior_kwargs.update(**prior_kwargs)
@@ -676,6 +694,9 @@ def make_model(
 
             m = intrisic_BH_parameters['m']
             chi = intrisic_BH_parameters['chi']
+
+            if chi_log_prior is not None:
+                numpyro.factor("chi_prior", chi_log_prior(chi))
 
             if df_min is None or df_max is None:
                 f = numpyro.deterministic("f", f_gr)
