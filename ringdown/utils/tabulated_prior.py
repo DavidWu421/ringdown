@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 import jax.numpy as jnp
 
+from .transform_remnant_spin_kde import transform_kde
+
 PRIOR_DIR = Path(__file__).parent.parent / "priors"
 _LOG_FLOOR = 1e-300
 
@@ -24,9 +26,14 @@ def _resolve_path(spec) -> Path:
     )
 
 
-def make_tabulated_log_prior(spec):
+def make_tabulated_log_prior(spec, shift=0.0, scale=1.0):
     """Return a JAX-compatible function ``log_prior(x)`` from a two-column
     text file (grid, pdf); lines starting with '#' are ignored.
+
+    Optionally, the tabulated density can be shifted by ``shift`` standard
+    deviations and broadened by a factor ``scale`` in logit space before use
+    (for prior-sensitivity tests); see
+    :func:`ringdown.utils.transform_remnant_spin_kde.transform_kde`.
 
     The pdf is normalized and linearly interpolated. Outside the tabulated
     range it is clamped to the edge values, so the sampling bounds
@@ -34,6 +41,11 @@ def make_tabulated_log_prior(spec):
     Returns None if ``spec`` is None or 'uniform'.
     """
     if spec is None or (isinstance(spec, str) and spec.lower() == "uniform"):
+        if shift != 0 or scale != 1:
+            raise ValueError(
+                "a prior shift/scale was requested but no tabulated prior "
+                "was given (set the prior file, e.g. 'remnant_spin_kde')"
+            )
         return None
 
     path = _resolve_path(spec)
@@ -42,6 +54,8 @@ def make_tabulated_log_prior(spec):
     x, p = x[order], p[order]
     if np.any(p < 0) or not np.all(np.isfinite(p)):
         raise ValueError(f"invalid pdf values in {path}")
+    if shift != 0 or scale != 1:
+        p = transform_kde(x, p, shift_frac=shift, scale=scale)
     norm = np.sum(0.5 * (p[1:] + p[:-1]) * np.diff(x))  # trapezoid rule
     if norm <= 0:
         raise ValueError(f"pdf in {path} has non-positive integral")
@@ -51,4 +65,6 @@ def make_tabulated_log_prior(spec):
         return jnp.log(jnp.maximum(jnp.interp(chi, x_j, p_j), _LOG_FLOOR))
 
     log_prior.path = str(path)
+    log_prior.shift = float(shift)
+    log_prior.scale = float(scale)
     return log_prior

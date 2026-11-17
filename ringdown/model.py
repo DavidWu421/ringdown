@@ -307,6 +307,8 @@ def make_model(
     chi_min: float = 0.0,
     chi_max: float = 0.99,
     chi_prior: None | str = None,
+    chi_prior_shift: float = 0.0,
+    chi_prior_scale: float = 1.0,
     Q_min: float = 0.0,
     Q_max: float = 0.999,
     alpha_min: float = 0.0,
@@ -368,6 +370,17 @@ def make_model(
         ringdown/priors/ (e.g., 'remnant_spin_kde') or a path to a
         two-column (chi, pdf) text file; the flat prior is multiplied by
         this pdf.
+
+    chi_prior_shift : float
+        Prior-sensitivity option: shift the `chi_prior` pdf in logit space by
+        this many standard deviations of the original pdf (negative moves it
+        towards lower spin).  Requires `chi_prior`.  Default 0 (no shift).
+
+    chi_prior_scale : float
+        Prior-sensitivity option: broaden (``> 1``) or narrow (``< 1``) the
+        `chi_prior` pdf about its logit-space mean.  Requires `chi_prior`.
+        Default 1 (no change).  See
+        :mod:`ringdown.utils.transform_remnant_spin_kde`.
 
     cosi_min : float or None
         The minimum inclination angle to the angular orbital momentum of the
@@ -540,7 +553,9 @@ def make_model(
             chosen_qnm_model = qnm_models.kerr.Kerr(modes)
 
         # Get prior parameters for this qnm_model and update defaults
-        chi_log_prior = make_tabulated_log_prior(chi_prior)
+        chi_log_prior = make_tabulated_log_prior(
+            chi_prior, shift=chi_prior_shift, scale=chi_prior_scale
+        )
         if chi_log_prior is not None:
             if not isinstance(modes, list):
                 raise ValueError("chi_prior requires explicit (Kerr-like) modes")
