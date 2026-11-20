@@ -575,7 +575,7 @@ def make_model(
             key_mc = jax.random.key(0)
 
             if single_polarization:
-                n_qaud = 2
+                n_quad = 2
             else:
                 n_quad = 4
 
